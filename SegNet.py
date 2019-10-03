@@ -540,8 +540,8 @@ def train(ob, max_steps=30001, batch_size=3):
                 with ob[3].graph.as_default():
                 	i=0
                 	for o in ob:
-                  		if o.images_tr is None:
-                			o.images_tr, o.labels_tr = dataset_inputs(image_filename[i], label_filename[i], batch_size, o.config)
+				if o.images_tr is None:
+					o.images_tr, o.labels_tr = dataset_inputs(image_filename[i], label_filename[i], batch_size, o.config)
                 			o.images_val, o.labels_val = dataset_inputs(val_image_filename[i], val_label_filename[i], batch_size,o.config)
 
               		l=tf.concat([latenv(ob[0]),latenv(ob[1])latenv(ob[2]),latenv(ob[3])],axis=0)
