@@ -523,46 +523,45 @@ class SegNet:
 def train(ob, max_steps=30001, batch_size=3):
         # For train the bayes, the FLAG_OPT SHOULD BE SGD, BUT FOR TRAIN THE NORMAL SEGNET,
         # THE FLAG_OPT SHOULD BE ADAM!!!
-    image_filename=[]
-    label_filename=[]
-    val_image_filename=[]
-    val_label_filename=[]
-    i=0
-    for o in ob:
+	image_filename=[]
+	label_filename=[]
+	val_image_filename=[]
+	val_label_filename=[]
+	i=0
+	for o in ob:
 
-        image_filename[i], label_filename[i] = get_filename_list(o.train_file, o.config)
-        val_image_filename[i], val_label_filename[i] = get_filename_list(o.val_file, o.config)
-        i=i+1
+		image_filename[i], label_filename[i] = get_filename_list(o.train_file, o.config)
+		val_image_filename[i], val_label_filename[i] = get_filename_list(o.val_file, o.config)
+        	i=i+1
+	with ob[0].graph.as_default():
+		with ob[1].graph.as_default():
+			with ob[2].graph.as_default():
+				with ob[3].graph.as_default():
+					i=0
+					for o in ob:
+						if o.images_tr is None:
+							o.images_tr, o.labels_tr = dataset_inputs(image_filename[i], label_filename[i], batch_size, o.config)
+							o.images_val, o.labels_val = dataset_inputs(val_image_filename[i], val_label_filename[i], batch_size,o.config)
 
-    with ob[0].graph.as_default():
-	with ob[1].graph.as_default():
-		with ob[2].graph.as_default():
-			with ob[3].graph.as_default():
-				i=0
-				for o in ob:
-					if o.images_tr is None:
-						o.images_tr, o.labels_tr = dataset_inputs(image_filename[i], label_filename[i], batch_size, o.config)
-						o.images_val, o.labels_val = dataset_inputs(val_image_filename[i], val_label_filename[i], batch_size,o.config)
-
-				l=tf.concat([latenv(ob[0]),latenv(ob[1])latenv(ob[2]),latenv(ob[3])],axis=0)
-              			fc1=tf.contrib.layers.fully_connected(l,786432,activation_fn=tf.nn.relu,    normalizer_fn=None, weights_initializer=initializers.xavier_initializer(),
+					l=tf.concat([latenv(ob[0]),latenv(ob[1])latenv(ob[2]),latenv(ob[3])],axis=0)
+              				fc1=tf.contrib.layers.fully_connected(l,786432,activation_fn=tf.nn.relu,    normalizer_fn=None, weights_initializer=initializers.xavier_initializer(),
               			biases_initializer=tf.zeros_initializer(),trainable=True)
-              			fc2=tf.contrib.layers.fully_connected(fc1,540000,activation_fn=tf.nn.relu,    normalizer_fn=None, weights_initializer=initializers.xavier_initializer(),
+              				fc2=tf.contrib.layers.fully_connected(fc1,540000,activation_fn=tf.nn.relu,    normalizer_fn=None, weights_initializer=initializers.xavier_initializer(),
               			biases_initializer=tf.zeros_initializer(),trainable=True)
-              			fc3=tf.contrib.layers.fully_connected(fc2,270000,activation_fn=tf.nn.relu,    normalizer_fn=None, weights_initializer=initializers.xavier_initializer(),
+              				fc3=tf.contrib.layers.fully_connected(fc2,270000,activation_fn=tf.nn.relu,    normalizer_fn=None, weights_initializer=initializers.xavier_initializer(),
               			biases_initializer=tf.zeros_initializer(),trainable=True)
-              			fc4=tf.contrib.layers.fully_connected(fc3,270000,activation_fn=None,    normalizer_fn=None, weights_initializer=initializers.xavier_initializer(),
+              				fc4=tf.contrib.layers.fully_connected(fc3,270000,activation_fn=None,    normalizer_fn=None, weights_initializer=initializers.xavier_initializer(),
               			biases_initializer=tf.zeros_initializer(),trainable=True)
                                                                   
             					#define separate losses for each segment, and a loss for the fully connected layers, change input file
-            			loss1 = segloss(logits=ob[0].logits, labels=ob[0].labels_pl)
-				loss2 = segloss(logits=ob[1].logits, labels=ob[1].labels_pl)
-				loss3 = segloss(logits=ob[2].logits, labels=ob[2].labels_pl)
-				loss4 = segloss(logits=ob[3].logits, labels=ob[3].labels_pl)
-				fcloss=multiloss(fc4,ob[0].labels_pl)
-				init=tf.global_variables_initializer()
+            				loss1 = segloss(logits=ob[0].logits, labels=ob[0].labels_pl)
+					loss2 = segloss(logits=ob[1].logits, labels=ob[1].labels_pl)
+					loss3 = segloss(logits=ob[2].logits, labels=ob[2].labels_pl)
+					loss4 = segloss(logits=ob[3].logits, labels=ob[3].labels_pl)
+					fcloss=multiloss(fc4,ob[0].labels_pl)
+					init=tf.global_variables_initializer()
 
-				train1, train2,train3,train4,trainf,global_step = train_op(seg1=loss1,seg2=loss2, seg3=loss3,seg3=loss3,lossf=fcloss,opt='ADAM')
+					train1, train2,train3,train4,trainf,global_step = train_op(seg1=loss1,seg2=loss2, seg3=loss3,seg3=loss3,lossf=fcloss,opt='ADAM')
 
                         #summary_op = tf.summary.merge_all()
 '''
@@ -581,21 +580,21 @@ def train(ob, max_steps=30001, batch_size=3):
                             ob[3].sess.run(tf.local_variables_initializer())
                             ob[3].sess.run(tf.global_variables_initializer())
 '''
-				coord = tf.train.Coordinator()
-                    		hreads = tf.train.start_queue_runners(coord=coord)
-                    		trainloss=[]
+					coord = tf.train.Coordinator()
+                    			hreads = tf.train.start_queue_runners(coord=coord)
+                    			trainloss=[]
                 # The queue runners basic reference:
                 # https://www.tensorflow.org/versions/r0.12/how_tos/threading_and_queues
                 #train_writer = tf.summary.FileWriter(self.tb_logs, self.sess.graph)
-                    	with tf.Session() as sess:
-                        	init.run()
-                        	for step in range(max_steps):
+                    			with tf.Session() as sess:
+                        			init.run()
+                        			for step in range(max_steps):
                     
-                            	image_batch, label_batch = sess.run([ob[0].images_tr, ob[0].labels_tr])
-                            	image_batch, label_batch = sess.run([ob[1].images_tr, ob[1].labels_tr])
-                            	image_batch, label_batch = sess.run([ob[2].images_tr, ob[2].labels_tr])
-                            	image_batch, label_batch = sess.run([ob[3].images_tr, ob[3].labels_tr])
-                            	feed_dict = {ob[0].inputs_pl: image_batch,
+                            			image_batch, label_batch = sess.run([ob[0].images_tr, ob[0].labels_tr])
+                            			image_batch, label_batch = sess.run([ob[1].images_tr, ob[1].labels_tr])
+                            			image_batch, label_batch = sess.run([ob[2].images_tr, ob[2].labels_tr])
+                            			image_batch, label_batch = sess.run([ob[3].images_tr, ob[3].labels_tr])
+                            			feed_dict = {ob[0].inputs_pl: image_batch,
                                  ob[0].labels_pl: label_batch,
                                  ob[0].is_training_pl: True,
                                  ob[0].keep_prob_pl: 0.5,
@@ -620,19 +619,19 @@ def train(ob, max_steps=30001, batch_size=3):
                                  ob[3].with_dropout_pl: True,
                                  ob[3].batch_size_pl: batch_size}
 
-                             	_,_,_,_,_, _loss1,_loss2,_loss3,_loss4,_fcloss= sess.run([train1,train2,train3,train4,trainf, loss1,loss2,loss3,loss4,fcloss],feed_dict=feed_dict)
+                             			_,_,_,_,_, _loss1,_loss2,_loss3,_loss4,_fcloss= sess.run([train1,train2,train3,train4,trainf, loss1,loss2,loss3,loss4,fcloss],feed_dict=feed_dict)
                                                                  
-                           	ob[0].train_loss.append(_loss1)
-                            	ob[1].train_loss.append(_loss2)
-                            	ob[2].train_loss.append(_loss3)
-                            	ob[3].train_loss.append(_loss4)
-                            	trainloss.append(_fcloss)
+                           			ob[0].train_loss.append(_loss1)
+                            			ob[1].train_loss.append(_loss2)
+                            			ob[2].train_loss.append(_loss3)
+                            			ob[3].train_loss.append(_loss4)
+                            			trainloss.append(_fcloss)
                     #ob[0].train_accuracy.append(_accuracy)
-                            	print("Iteration {}: Train Loss1{:6.3f}".format(step, ob[0].train_loss[-1]))
-                            	print("Iteration {}: Train Loss2{:6.3f}".format(step, ob[2].train_loss[-1]))
-                            	print("Iteration {}: Train Loss3{:6.3f}".format(step, ob[3].train_loss[-1]))
-                            	print("Iteration {}: Train Loss4{:6.3f}".format(step, ob[4].train_loss[-1]))
-                            	print("Iteration {}: Train Lossf{:6.3f}".format(step, trainloss[-1]))
+                            			print("Iteration {}: Train Loss1{:6.3f}".format(step, ob[0].train_loss[-1]))
+                            			print("Iteration {}: Train Loss2{:6.3f}".format(step, ob[2].train_loss[-1]))
+                            			print("Iteration {}: Train Loss3{:6.3f}".format(step, ob[3].train_loss[-1]))
+                            			print("Iteration {}: Train Loss4{:6.3f}".format(step, ob[4].train_loss[-1]))
+						print("Iteration {}: Train Lossf{:6.3f}".format(step, trainloss[-1]))
 '''
                     if step % 100 == 0:
                         conv_classifier = self.sess.run(self.logits, feed_dict=feed_dict)
@@ -673,8 +672,8 @@ def train(ob, max_steps=30001, batch_size=3):
                                 step, self.train_loss[-1], self.train_accuracy[-1], self.val_loss[-1],
                                 self.val_acc[-1]))
 '''
-				coord.request_stop()
-				coord.join(threads)
+						coord.request_stop()
+						coord.join(threads)
 
 
 
